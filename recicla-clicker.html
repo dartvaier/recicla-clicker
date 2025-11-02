@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recicla Clicker</title>
+    <!-- Fonte Inter do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Reset Básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Um azul-claro de fundo */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Container Principal do Jogo */
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        /* Cabeçalho com Título e Placar */
+        header {
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        #score-board {
+            display: flex;
+            justify-content: space-around;
+            background-color: #ecf0f1;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        #score-board div {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        #score, #timer {
+            color: #2980b9;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Área do Item a ser reciclado */
+        #item-area {
+            background-color: #fafafa;
+            border: 2px dashed #bdc3c7;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        #item-emoji {
+            font-size: 4rem; /* Emoji grande */
+            margin-bottom: 0.5rem;
+        }
+
+        #item-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        /* Área das Lixeiras */
+        #bins-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+        }
+
+        .bin {
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bin:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .bin-emoji {
+            font-size: 2rem;
+        }
+
+        /* Cores das Lixeiras */
+        #bin-papel { background-color: #3498db; } /* Azul */
+        #bin-plastico { background-color: #e74c3c; } /* Vermelho */
+        #bin-vidro { background-color: #2ecc71; } /* Verde */
+        #bin-metal { background-color: #f1c40f; } /* Amarelo */
+        #bin-organico { background-color: #9b59b6; } /* Roxo (adaptação, às vezes é marrom) */
+
+        /* Botão de Início */
+        #start-button, #restart-button {
+            background-color: #27ae60;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        #start-button:hover, #restart-button:hover {
+            background-color: #229954;
+        }
+
+        /* Mensagens de Feedback */
+        #feedback-message {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 1.5rem; /* Evita que o layout "pule" */
+        }
+
+        .correct {
+            color: #27ae60; /* Verde */
+        }
+
+        .wrong {
+            color: #e74c3c; /* Vermelho */
+        }
+
+        /* Tela Final */
+        #game-over-screen {
+            display: none; /* Escondido por padrão */
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #final-score {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <main id="game-container">
+        <!-- Tela Inicial -->
+        <div id="start-screen">
+            <h1>Recicla Clicker ♻️</h1>
+            <p>Aprenda a reciclar clicando na lixeira correta para cada item.</p>
+            <p>Você tem 60 segundos. Vamos lá!</p>
+            <button id="start-button">Começar Jogo</button>
+        </div>
+
+        <!-- Tela Principal do Jogo -->
+        <div id="game-screen" style="display: none;">
+            <header>
+                <div id="score-board">
+                    <div>Pontos: <span id="score">0</span></div>
+                    <div>Tempo: <span id="timer">60</span>s</div>
+                </div>
+            </header>
+
+            <section id="item-area">
+                <div id="item-emoji">❓</div>
+                <div id="item-name">Qual item virá?</div>
+            </section>
+
+            <section id="bins-container">
+                <button class="bin" id="bin-papel" data-type="papel">
+                    <span class="bin-emoji">📄</span>
+                    <span>Papel</span>
+                </button>
+                <button class="bin" id="bin-plastico" data-type="plastico">
+                    <span class="bin-emoji">🧴</span>
+                    <span>Plástico</span>
+                </button>
+                <button class="bin" id="bin-vidro" data-type="vidro">
+                    <span class="bin-emoji">🍾</span>
+                    <span>Vidro</span>
+                </button>
+                <button class="bin" id="bin-metal" data-type="metal">
+                    <span class="bin-emoji">🥫</span>
+                    <span>Metal</span>
+                </button>
+                <button class="bin" id="bin-organico" data-type="organico">
+                    <span class="bin-emoji">🍎</span>
+                    <span>Orgânico</span>
+                </button>
+            </section>
+
+            <div id="feedback-message"></div>
+        </div>
+
+        <!-- Tela de Fim de Jogo -->
+        <div id="game-over-screen">
+            <h2>Tempo Esgotado!</h2>
+            <p id="final-score">Sua pontuação final foi: <span id="end-score">0</span></p>
+            <p>Você ajudou muito o planeta! 🌍</p>
+            <button id="restart-button">Jogar Novamente</button>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. Definição dos Itens ---
+            // Lista de itens com nome, emoji e o tipo correto de lixeira
+            const items = [
+                { name: 'Jornal', emoji: '📰', type: 'papel' },
+                { name: 'Garrafa PET', emoji: '🧴', type: 'plastico' },
+                { name: 'Copo de Vidro', emoji: '🍷', type: 'vidro' },
+                { name: 'Lata de Refrigerante', emoji: '🥫', type: 'metal' },
+                { name: 'Casca de Banana', emoji: '🍌', type: 'organico' },
+                { name: 'Caixa de Papelão', emoji: '📦', type: 'papel' },
+                { name: 'Saco Plástico', emoji: '🛍️', type: 'plastico' },
+                { name: 'Garrafa de Vinho', emoji: '🍾', type: 'vidro' },
+                { name: 'Clipes de Metal', emoji: '📎', type: 'metal' },
+                { name: 'Resto de Maçã', emoji: '🍎', type: 'organico' },
+                { name: 'Revista', emoji: '🗞️', type: 'papel' },
+                { name: 'Pote de Iogurte', emoji: '🍦', type: 'plastico' },
+                { name: 'Pote de Geleia', emoji: '🍯', type: 'vidro' },
+                { name: 'Tampa de Garrafa', emoji: '🔘', type: 'metal' },
+                { name: 'Resto de Comida', emoji: '🥪', type: 'organico' }
+            ];
+
+            // --- 2. Elementos do DOM ---
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            
+            const startButton = document.getElementById('start-button');
+            const restartButton = document.getElementById('restart-button');
+
+            const scoreDisplay = document.getElementById('score');
+            const timerDisplay = document.getElementById('timer');
+            
+            const itemEmojiDisplay = document.getElementById('item-emoji');
+            const itemNameDisplay = document.getElementById('item-name');
+            
+            const binsContainer = document.getElementById('bins-container');
+            const feedbackMessage = document.getElementById('feedback-message');
+            
+            const endScoreDisplay = document.getElementById('end-score');
+
+            // --- 3. Variáveis de Estado do Jogo ---
+            let score = 0;
+            let timeLeft = 60;
+            let timerInterval = null;
+            let currentItem = null;
+
+            // --- 4. Funções do Jogo ---
+
+            /** Inicia o jogo */
+            function startGame() {
+                score = 0;
+                timeLeft = 60;
+                scoreDisplay.textContent = score;
+                timerDisplay.textContent = timeLeft;
+                
+                startScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+
+                nextItem();
+                startTimer();
+            }
+
+            /** Inicia o contador */
+            function startTimer() {
+                // Limpa qualquer timer anterior
+                clearInterval(timerInterval); 
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }, 1000); // Atualiza a cada 1 segundo
+            }
+
+            /** Termina o jogo */
+            function endGame() {
+                clearInterval(timerInterval);
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'flex';
+                endScoreDisplay.textContent = score;
+            }
+
+            /** Seleciona e exibe o próximo item */
+            function nextItem() {
+                // Limpa o feedback
+                feedbackMessage.textContent = '';
+                feedbackMessage.className = '';
+                
+                // Seleciona um item aleatório
+                const randomIndex = Math.floor(Math.random() * items.length);
+                currentItem = items[randomIndex];
+
+                // Atualiza a interface
+                itemEmojiDisplay.textContent = currentItem.emoji;
+                itemNameDisplay.textContent = currentItem.name;
+            }
+
+            /** Verifica a resposta do jogador */
+            function checkAnswer(e) {
+                // Verifica se o clique foi em um botão de lixeira
+                if (!e.target.closest('.bin')) return;
+
+                const clickedBinType = e.target.closest('.bin').dataset.type;
+
+                if (clickedBinType === currentItem.type) {
+                    // Resposta Correta
+                    score++;
+                    feedbackMessage.textContent = 'Correto! +1 Ponto';
+                    feedbackMessage.className = 'correct';
+                } else {
+                    // Resposta Errada
+                    if (score > 0) score--; // Evita pontuação negativa
+                    feedbackMessage.textContent = `Errado! ${currentItem.name} é ${currentItem.type}.`;
+                    feedbackMessage.className = 'wrong';
+                }
+
+                // Atualiza o placar
+                scoreDisplay.textContent = score;
+
+                // Aguarda um instante antes de ir para o próximo item
+                setTimeout(nextItem, 800);
+            }
+
+            // --- 5. Event Listeners ---
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', startGame);
+            binsContainer.addEventListener('click', checkAnswer);
+        });
+    </script>
+</body>
+</html>
+
